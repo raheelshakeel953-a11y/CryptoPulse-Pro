@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="theme-color" content="#0a0c12">
+  <meta name="description" content="CryptoPulse Pro - Advanced Cryptocurrency Dashboard with live prices, charts, portfolio tracker, and market analytics">
+  <title>CryptoPulse Pro | Advanced Crypto Dashboard</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <!-- Chart.js & Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle theme">
+    <i class="fas fa-moon"></i>
+  </button>
+
+  <div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="header">
+      <div class="logo">
+        <h1><i class="fas fa-chart-line"></i> CryptoPulse Pro</h1>
+        <p>Real-time · Advanced Analytics · Smart Portfolio</p>
+      </div>
+      <div class="tools-badge">
+        <div class="glass-btn" id="portfolioModalBtn">
+          <i class="fas fa-wallet"></i><span> Portfolio</span>
+        </div>
+        <div class="glass-btn" id="converterModalBtn">
+          <i class="fas fa-exchange-alt"></i><span> Converter</span>
+        </div>
+        <div class="glass-btn" id="newsModalBtn">
+          <i class="fas fa-newspaper"></i><span> News</span>
+        </div>
+        <div class="glass-btn" id="refreshBtn">
+          <i class="fas fa-sync-alt"></i><span> Refresh</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Row - Enhanced Metrics -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-globe"></i> GLOBAL MARKET CAP</div>
+        <div class="stat-value" id="globalCap">—</div>
+        <div class="stat-change" id="globalCapChange"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fab fa-bitcoin"></i> BTC DOMINANCE</div>
+        <div class="stat-value" id="btcDominance">—</div>
+        <div class="stat-sub" id="ethDominance">ETH: —</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-chart-line"></i> TOTAL VOLUME (24h)</div>
+        <div class="stat-value" id="totalVolume">—</div>
+        <div class="stat-change" id="volumeChange"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-chart-pie"></i> DEFI VOLUME</div>
+        <div class="stat-value" id="defiVolume">—</div>
+        <div class="stat-sub" id="defiDominance"></div>
+      </div>
+    </div>
+
+    <!-- Market Sentiment & Fear & Greed Index -->
+    <div class="sentiment-row">
+      <div class="sentiment-card">
+        <div class="sentiment-icon"><i class="fas fa-chart-simple"></i></div>
+        <div class="sentiment-content">
+          <div class="sentiment-label">Crypto Fear & Greed Index</div>
+          <div class="sentiment-value" id="fearGreedValue">—</div>
+          <div class="sentiment-bar">
+            <div class="sentiment-fill" id="fearGreedFill" style="width: 0%;"></div>
+          </div>
+          <div class="sentiment-classification" id="fearGreedText">—</div>
+        </div>
+      </div>
+      <div class="sentiment-card">
+        <div class="sentiment-icon"><i class="fas fa-waveform"></i></div>
+        <div class="sentiment-content">
+          <div class="sentiment-label">Market Sentiment</div>
+          <div class="sentiment-value" id="marketSentiment">—</div>
+          <div class="metric-grid">
+            <span><i class="fas fa-arrow-up text-success"></i> Bullish: <strong id="bullishCount">—</strong></span>
+            <span><i class="fas fa-arrow-down text-danger"></i> Bearish: <strong id="bearishCount">—</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Gainers & Losers Ticker -->
+    <div class="ticker-container">
+      <div class="ticker-label"><i class="fas fa-fire"></i> TOP GAINERS</div>
+      <div class="ticker-scroll" id="gainersTicker"></div>
+      <div class="ticker-label"><i class="fas fa-snowflake"></i> TOP LOSERS</div>
+      <div class="ticker-scroll" id="losersTicker"></div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Left: Crypto Table with more columns -->
+      <div class="panel">
+        <div class="panel-header">
+          <span><i class="fas fa-coins"></i> Top 25 Cryptocurrencies</span>
+          <div class="panel-controls">
+            <input type="text" id="searchInput" placeholder="🔍 Search coin..." class="search-input">
+            <select id="sortSelect" class="sort-select">
+              <option value="rank">Rank</option>
+              <option value="price">Price</option>
+              <option value="change">24h Change</option>
+              <option value="volume">Volume</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="crypto-table" id="cryptoTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Coin</th><th>Price (USD)</th><th>24h %</th><th>7d %</th><th>Market Cap</th><th>Volume (24h)</th><th>ATH</th><th><i class="fas fa-star"></i></th><th>Tools</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="10"><div class="loader"></div> Loading market data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Chart & Tools -->
+      <div class="right-panel">
+        <div class="panel">
+          <div class="panel-header">
+            <span><i class="fas fa-chart-line"></i> Price Chart</span>
+            <div class="chart-controls">
+              <button class="chart-time-btn active" data-days="7">7D</button>
+              <button class="chart-time-btn" data-days="14">14D</button>
+              <button class="chart-time-btn" data-days="30">30D</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="priceChart" width="400" height="240"></canvas>
+            <div id="selectedCoinLabel" class="coin-label">Bitcoin (BTC)</div>
+          </div>
+        </div>
+
+        <!-- Portfolio Summary -->
+        <div class="portfolio-summary" id="portfolioSummaryEl">
+          <div class="portfolio-info">
+            <i class="fas fa-chart-pie"></i>
+            <span>Portfolio Value: <strong id="portfolioTotal">$0.00</strong></span>
+          </div>
+          <div class="portfolio-info">
+            <i class="fas fa-list-ul"></i>
+            <span>Assets: <span id="portfolioCount">0</span></span>
+          </div>
+          <div class="portfolio-info">
+            <i class="fas fa-chart-line"></i>
+            <span>24h P&L: <strong id="portfolioPnL" class="text-success">$0.00</strong></span>
+          </div>
+          <button class="glass-btn small-btn" id="managePortfolioBtn">
+            <i class="fas fa-edit"></i> Manage
+          </button>
+        </div>
+
+        <!-- Market Stats Widget -->
+        <div class="market-stats-widget">
+          <div class="widget-item">
+            <span><i class="fas fa-charging-station"></i> Gas (ETH)</span>
+            <strong id="ethGasPrice">—</strong>
+          </div>
+          <div class="widget-item">
+            <span><i class="fas fa-bolt"></i> BTC Hashrate</span>
+            <strong id="btcHashrate">—</strong>
+          </div>
+          <div class="widget-item">
+            <span><i class="fas fa-percent"></i> Stablecoin Supply</span>
+            <strong id="stablecoinSupply">—</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fear & Greed History -->
+    <div class="history-panel">
+      <div class="panel-header">
+        <span><i class="fas fa-chart-simple"></i> Fear & Greed History (30 Days)</span>
+      </div>
+      <div class="history-chart-container">
+        <canvas id="fearGreedChart" width="800" height="100"></canvas>
+      </div>
+    </div>
+
+    <footer>
+      <p><i class="fas fa-database"></i> Data via CoinGecko & Alternative.me · Real-time updates every 45s · <i class="fas fa-mobile-alt"></i> Fully responsive</p>
+    </footer>
+  </div>
+
+  <!-- ========== PORTFOLIO MODAL ========== -->
+  <div id="portfolioModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span><i class="fas fa-database"></i> My Portfolio</span>
+        <span class="close-modal" data-modal="portfolioModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="portfolioList" class="portfolio-list-container"></div>
+        <div class="portfolio-stats-modal" id="portfolioModalStats"></div>
+        <h4><i class="fas fa-plus-circle"></i> Add New Asset</h4>
+        <select id="assetSelect" class="modern-select"></select>
+        <input type="number" id="assetAmount" placeholder="Amount (e.g., 0.5)" step="any" class="modern-input">
+        <input type="number" id="assetPrice" placeholder="Purchase price (optional)" step="any" class="modern-input">
+        <button id="addAssetBtn" class="modal-btn primary-btn"><i class="fas fa-plus"></i> Add to Portfolio</button>
+        <button id="clearPortfolioBtn" class="modal-btn danger-btn"><i class="fas fa-trash-alt"></i> Clear All</button>
+        <div class="small-text">💡 Values calculated with live market prices | Purchase price helps track P&L</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CONVERTER MODAL ========== -->
+  <div id="converterModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span><i class="fas fa-calculator"></i> Crypto Converter</span>
+        <span class="close-modal" data-modal="converterModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <label><i class="fas fa-arrow-up"></i> From</label>
+        <select id="convertFrom" class="modern-select"></select>
+        <label><i class="fas fa-arrow-down"></i> To</label>
+        <select id="convertTo" class="modern-select"></select>
+        <label>Amount</label>
+        <input type="number" id="convertAmount" placeholder="Enter amount" value="1" class="modern-input">
+        <button id="calculateConvertBtn" class="modal-btn primary-btn"><i class="fas fa-exchange-alt"></i> Convert Now</button>
+        <div id="convertResult" class="convert-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NEWS MODAL ========== -->
+  <div id="newsModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <span><i class="fas fa-newspaper"></i> Crypto News</span>
+        <span class="close-modal" data-modal="newsModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="newsList" class="news-list">Loading latest news...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
